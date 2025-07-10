@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Weather App</title>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,300,400,600,700">
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans+Condensed:300">  
+  <link rel="stylesheet" href="style.css">
+
+  <style>
+    /* Login Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 9999;
+      left: 0; top: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.6);
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-content {
+      background: white;
+      padding: 2rem;
+      border-radius: 12px;
+      width: 320px;
+      text-align: center;
+    }
+
+    .modal-content h2 {
+      margin-top: 0;
+    }
+
+    .modal-content input {
+      width: 90%;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    .modal-content button {
+      padding: 10px 20px;
+      background: #4d4da4;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .modal-content button:hover {
+      background: #3a3a8c;
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 10px;
+      right: 20px;
+      font-size: 24px;
+      color: white;
+      cursor: pointer;
+    }
+    /* Stylish Top Modal */
+.top-modal {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  display: none;
+  animation: slideDown 0.5s ease;
+}
+
+.top-modal-content {
+  background: linear-gradient(135deg, #72EDF2 10%, #4d4da4 100%);
+  color: white;
+  padding: 16px 24px;
+  border-radius: 12px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  font-family: 'Source Sans Pro', sans-serif;
+  display: flex;
+  align-items: center;
+  min-width: 300px;
+  max-width: 80vw;
+}
+
+.top-modal-content span {
+  flex-grow: 1;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.top-modal-close {
+  background: transparent;
+  border: none;
+  font-size: 1.4rem;
+  color: white;
+  cursor: pointer;
+  margin-left: 15px;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -20px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+  </style>
+</head>
+
+<body>
+
+<header class="glass-navbar">
+  <div class="navbar-container">
+    <div class="logo">🌦️ WeatherBuddy</div>
+    <nav class="nav-links">
+      <a href="#">Home</a>
+      <a href="#">Forecast</a>
+      <a href="calender.html">Calender</a>
+      <a href="#" id="open-login">Login</a>
+    </nav>
+    <a href="chat.html" class="login-button">Chat</a>
+  </div>
+</header>
+
+<!-- Login Modal -->
+<div class="modal" id="login-modal">
+  <div class="modal-content">
+    <h2>Login</h2>
+    <input type="text" id="username" placeholder="Enter your name" required>
+    <input type="email" id="email" placeholder="Enter your email" required>
+    <button onclick="handleLogin()">Login</button>
+  </div>
+</div>
+
+<!-- Close Button -->
+<div class="close-btn" id="close-login" title="Close Login">×</div>
+
+<!-- Main Content -->
+<div class="container">
+  <div class="weather-side">
+    <div class="weather-gradient"></div>
+    <div class="date-container">
+      <h2 class="date-dayname"></h2>
+      <span class="date-day"></span>
+      <i class="fa-solid fa-location-dot"></i>
+      <span class="location"></span>
+    </div>
+    <div class="weather-container">
+      <span class="weather-icon"></span>
+      <h1 class="weather-temp"></h1>
+      <h3 class="weather-desc"></h3>
+    </div>
+  </div>
+
+  <div class="info-side">
+    <div class="today-info-container">
+      <div class="today-info">
+        <div class="humidity">
+          <span class="title"><i class="fa-solid fa-droplet"></i> HUMIDITY</span>
+          <span class="value"></span>
+          <div class="clear"></div>
+        </div>
+        <div class="wind">
+          <span class="title"><i class="fa-solid fa-wind"></i> WIND</span>
+          <span class="value"></span>
+          <div class="clear"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="week-container">
+      <ul class="week-list">
+        <li><span class="day-name"></span><span class="day-temp"></span><span class="day-icon"></span></li>
+        <li><span class="day-name"></span><span class="day-temp"></span><span class="day-icon"></span></li>
+        <li><span class="day-name"></span><span class="day-temp"></span><span class="day-icon"></span></li>
+        <li><span class="day-name"></span><span class="day-temp"></span><span class="day-icon"></span></li>
+        <li><span class="day-name"></span><span class="day-temp"></span><span class="day-icon"></span></li>
+      </ul>
+      <div class="clear"></div>
+    </div>
+
+    <div class="location-container">
+      <input class="location-input" type="text" id="city" placeholder="Enter your city..." value="New York">
+    </div>
+  </div>
+</div>
+
+<!-- Location Permission Popup -->
+<div id="location-popup" class="popup-overlay">
+  <div class="popup-box">
+    <h3>Allow Location Access</h3>
+    <p>This app uses your location to show local weather. Would you like to allow it?</p>
+    <div class="popup-buttons">
+      <button id="allow-location">Yes</button>
+      <button id="deny-location">No</button>
+    </div>
+  </div>
+</div>
+<!-- Weather Suggestion Popup -->
+<div id="suggestion-popup" class="modal">
+  <div class="modal-content">
+    <h2>🌤️ Weather Suggestion</h2>
+    <p id="suggestion-message"></p>
+    <button onclick="closeSuggestion()">Close</button>
+  </div>
+</div>
+
+<!-- Calendar Modal -->
+<div id="calendar-modal" class="calendar-modal">
+  <div class="calendar-content">
+    <span class="calendar-close" onclick="closeCalendarModal()">×</span>
+    <h3>📅 Set a Reminder</h3>
+    <label for="reminder-date">Date:</label>
+    <input type="date" id="reminder-date">
+    <label for="reminder-msg">Message:</label>
+    <textarea id="reminder-msg" rows="2" placeholder="Enter reminder..."></textarea>
+    <button onclick="saveReminder()">Save Reminder</button>
+    <div id="reminder-list"></div>
+  </div>
+</div>
+<!-- Stylish Top Modal for Reminder -->
+<div id="reminder-top-modal" class="top-modal">
+  <div class="top-modal-content">
+    <span id="reminder-top-text"></span>
+    <button class="top-modal-close" onclick="closeReminderTopModal()">×</button>
+  </div>
+</div>
+
+
+
+
+
+<!-- Scripts -->
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script src="main.js"></script>
+
+<script>
+  const openLogin = document.getElementById('open-login');
+  const closeLogin = document.getElementById('close-login');
+  const loginModal = document.getElementById('login-modal');
+
+  openLogin.addEventListener('click', () => {
+    loginModal.style.display = 'flex';
+    closeLogin.style.display = 'block';
+  });
+
+  closeLogin.addEventListener('click', () => {
+    loginModal.style.display = 'none';
+    closeLogin.style.display = 'none';
+  });
+
+  window.onclick = function (e) {
+    if (e.target === loginModal) {
+      loginModal.style.display = 'none';
+      closeLogin.style.display = 'none';
+    }
+  };
+
+  function handleLogin() {
+    const name = document.getElementById('username').value.trim();
+    const email = document.getElementById('email').value.trim();
+
+    if (name && email) {
+      localStorage.setItem("weatherUser", JSON.stringify({ name, email }));
+      alert(`✅ Welcome, ${name}!`);
+      loginModal.style.display = 'none';
+      closeLogin.style.display = 'none';
+    } else {
+      alert("❗ Please enter both name and email.");
+    }
+  }
+  window.addEventListener("load", () => {
+  const today = new Date().toISOString().split("T")[0];
+  const reminders = JSON.parse(localStorage.getItem("reminders")) || [];
+
+  const todayReminder = reminders.find(r => r.date === today);
+  if (todayReminder) {
+    const modal = document.getElementById("reminder-top-modal");
+    const text = document.getElementById("reminder-top-text");
+
+    text.textContent = `🔔 Reminder for Today: ${todayReminder.message}`;
+    modal.style.display = "block";
+
+    // Auto close after 6 seconds
+    setTimeout(() => {
+      modal.style.display = "none";
+    }, 6000);
+  }
+});
+
+function closeReminderTopModal() {
+  document.getElementById("reminder-top-modal").style.display = "none";
+}
+
+  document.querySelector('a[href="#"]:nth-child(2)').addEventListener('click', getForecastSuggestion); // Forecast button
+
+function getForecastSuggestion() {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(async position => {
+      const lat = position.coords.latitude;
+      const lon = position.coords.longitude;
+
+      try {
+        const apiKey = "67c6327d367d37bcf736e52f2a869f16"; // replace with your real API key
+        const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`;
+
+        const res = await fetch(url);
+        const data = await res.json();
+        const condition = data.weather[0].main;
+
+        let message = "";
+
+        switch (condition.toLowerCase()) {
+          case 'clear':
+            message = "☀️ It's sunny! Wear sunglasses, light clothes, and drink plenty of water!";
+            break;
+          case 'clouds':
+            message = "⛅ It's cloudy. You may still go out but keep a light jacket handy.";
+            break;
+          case 'rain':
+            message = "🌧️ It's rainy! Carry an umbrella and wear waterproof shoes.";
+            break;
+          case 'thunderstorm':
+            message = "⛈️ Thunderstorm alert! Stay indoors and avoid travel.";
+            break;
+          case 'snow':
+            message = "❄️ Snowy weather! Bundle up, wear warm clothes and be careful on the roads.";
+            break;
+          default:
+            message = `🌦️ Weather: ${condition}. Stay prepared and stay safe!`;
+        }
+
+        document.getElementById('suggestion-message').textContent = message;
+        document.getElementById('suggestion-popup').style.display = 'flex';
+
+      } catch (error) {
+        alert("⚠️ Unable to get weather info. Please try again.");
+      }
+
+    }, () => {
+      alert("❌ Location access denied. Cannot fetch forecast.");
+    });
+  } else {
+    alert("🌐 Geolocation not supported by your browser.");
+  }
+}
+
+function closeSuggestion() {
+  document.getElementById('suggestion-popup').style.display = 'none';
+}
+// Open calendar modal when "Calendar" is clicked
+document.querySelector('a[href="calender.html"]').addEventListener('click', function(e) {
+  e.preventDefault();
+  document.getElementById("calendar-modal").style.display = "block";
+  loadReminders();
+});
+
+// Close modal
+function closeCalendarModal() {
+  document.getElementById("calendar-modal").style.display = "none";
+}
+
+// Load saved reminders
+// Load saved reminders with Edit buttons
+function loadReminders() {
+  const reminderList = document.getElementById('reminder-list');
+  const reminders = JSON.parse(localStorage.getItem("reminders")) || [];
+  reminderList.innerHTML = '';
+
+  reminders.forEach((r, index) => {
+    const div = document.createElement('div');
+    div.className = 'reminder-item';
+    div.innerHTML = `
+      <strong>${r.date}</strong><br>${r.message}
+      <button onclick="editReminder(${index})" style="margin-left:10px; padding:3px 8px; font-size:0.8rem;">✏️ Edit</button>
+    `;
+    reminderList.appendChild(div);
+  });
+}
+
+// Edit selected reminder
+function editReminder(index) {
+  const reminders = JSON.parse(localStorage.getItem("reminders")) || [];
+  const selected = reminders[index];
+
+  // Prefill inputs
+  document.getElementById('reminder-date').value = selected.date;
+  document.getElementById('reminder-msg').value = selected.message;
+
+  // Remove old reminder so it can be updated on re-save
+  reminders.splice(index, 1);
+  localStorage.setItem("reminders", JSON.stringify(reminders));
+  loadReminders();
+}
+
+// Save new or edited reminder
+function saveReminder() {
+  const date = document.getElementById('reminder-date').value;
+  const message = document.getElementById('reminder-msg').value.trim();
+
+  if (!date || !message) {
+    alert("❗Please select a date and enter a message.");
+    return;
+  }
+
+  const reminders = JSON.parse(localStorage.getItem("reminders")) || [];
+
+  // Check for duplicate date, update if exists
+  const existingIndex = reminders.findIndex(r => r.date === date);
+  if (existingIndex !== -1) {
+    reminders.splice(existingIndex, 1); // Remove old version
+  }
+
+  reminders.push({ date, message });
+  localStorage.setItem("reminders", JSON.stringify(reminders));
+  alert("✅ Reminder saved!");
+
+  // Clear inputs
+  document.getElementById('reminder-date').value = '';
+  document.getElementById('reminder-msg').value = '';
+  loadReminders();
+}
+
+// Save new reminder
+function saveReminder() {
+  const date = document.getElementById('reminder-date').value;
+  const message = document.getElementById('reminder-msg').value.trim();
+
+  if (!date || !message) {
+    alert("❗Please select a date and enter a message.");
+    return;
+  }
+
+  const reminders = JSON.parse(localStorage.getItem("reminders")) || [];
+  reminders.push({ date, message });
+  localStorage.setItem("reminders", JSON.stringify(reminders));
+  alert("✅ Reminder saved!");
+
+  document.getElementById('reminder-date').value = '';
+  document.getElementById('reminder-msg').value = '';
+  loadReminders();
+}
+
+
+</script>
+
+</body>
+</html>
