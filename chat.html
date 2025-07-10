@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Weather Buddy</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
+
+    html {
+      font-size: 16px;
+    }
+
+    @media (max-width: 480px) {
+      html {
+        font-size: 14px;
+      }
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Montserrat', sans-serif;
+      background: linear-gradient(to right, #d3cce3, #e9e4f0);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    header {
+      background: #4d4da4;
+      color: white;
+      padding: 1rem;
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+
+    #chat {
+      flex: 1;
+      padding: 1rem;
+      overflow-y: auto;
+      max-height: 70vh;
+      scroll-behavior: smooth;
+    }
+
+    .bubble {
+      background: white;
+      border-radius: 15px;
+      padding: 10px 15px;
+      margin: 10px 0;
+      word-wrap: break-word;
+      word-break: break-word;
+      max-width: 90%;
+      box-shadow: 0 3px 5px rgba(0,0,0,0.1);
+    }
+
+    .bot {
+      align-self: flex-start;
+      background: #f0f0ff;
+    }
+
+    .user {
+      align-self: flex-end;
+      background: #cce5ff;
+    }
+
+    #chat-container {
+      display: flex;
+      flex-direction: column;
+      padding: 1rem;
+    }
+
+    #input-area {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 1rem;
+      gap: 10px;
+      flex-wrap: wrap;
+      position: sticky;
+      bottom: 0;
+      background: #e9e4f0;
+    }
+
+    #user-input {
+      flex: 1;
+      padding: 10px;
+      border-radius: 20px;
+      border: 1px solid #ccc;
+      font-size: 1rem;
+    }
+
+    button {
+      background-color: #4d4da4;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #3b3b86;
+    }
+
+    #bot-profile {
+      display: flex;
+      align-items: center;
+      background-color: #ffffffcc;
+      margin: 1rem;
+      padding: 1rem;
+      border-radius: 15px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .bot-avatar {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      margin-right: 15px;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      cursor: pointer;
+    }
+
+    .bot-avatar:hover {
+      transform: scale(1.1) rotate(5deg);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .bot-name {
+      font-weight: bold;
+      font-size: 1.2rem;
+    }
+
+    .bot-desc {
+      color: #666;
+    }
+
+    .bot-status {
+      color: green;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<body>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+  <header>☀️ Weather Buddy - Chat Mode</header>
+
+  <section id="bot-profile">
+    <a href="#" id="bot-avatar-link" title="Click to know me!">
+      <img src="https://cdn-icons-png.flaticon.com/512/1142/1142489.png" alt="Bot Avatar" class="bot-avatar" />
+    </a>
+    <div>
+      <div class="bot-name">Weather Buddy ☀️</div>
+      <div class="bot-desc">Your personal weather assistant 🤖</div>
+      <div class="bot-status">🟢 Online</div>
+    </div>
+  </section>
+
+  <div id="chat">
+    <div id="chat-container"></div>
+  </div>
+
+  <div id="input-area">
+    <input type="text" id="user-input" placeholder="Type here..." />
+    <button onclick="handleUserInput()">Send</button>
+  </div>
+
+  <script>
+    const chatContainer = document.getElementById('chat-container');
+    const input = document.getElementById('user-input');
+
+    let step = 0;
+    let userName = '';
+    let userCity = '';
+    let weatherCondition = '';
+
+    function addBubble(text, sender = 'bot') {
+      const div = document.createElement('div');
+      div.className = `bubble ${sender}`;
+
+      div.textContent = text;
+      chatContainer.appendChild(div);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+
+      if (sender === 'bot') speakText(text);
+    }
+
+    function speakText(text) {
+      const synth = window.speechSynthesis;
+      const cleaned = text.replace(/[\p{Emoji_Presentation}|\u200D|\uFE0F]/gu, "").replace(/https?:\/\/\S+/g, "Link provided");
+      synth.speak(new SpeechSynthesisUtterance(cleaned));
+    }
+
+    function stopConversation() {
+      addBubble(`🛑 Conversation stopped. Have a good day, ${userName || "friend"}!`);
+      step = -1;
+    }
+
+    async function handleUserInput() {
+      const value = input.value.trim();
+      if (!value) return;
+      addBubble(value, 'user');
+      input.value = '';
+
+      if (value.toLowerCase() === 'stop') {
+        stopConversation();
+        return;
+      }
+
+      switch (step) {
+        case 0:
+          userName = value;
+          addBubble(`Hi ${userName}, please enter your city.`);
+          step = 1;
+          break;
+
+        case 1:
+          userCity = value;
+          addBubble(`Getting weather for ${userCity}...`);
+          const success = await getWeather(userCity);
+          if (success) {
+            giveWeatherTip(weatherCondition);
+            step = 2;
+          } else {
+            addBubble("Please enter your city again.");
+          }
+          break;
+
+        case 2:
+          addBubble("Would you like some songs based on the weather? (✅ or ❌)");
+          step = 3;
+          break;
+
+        case 3:
+          if (value === '✅' || value.toLowerCase().includes('yes')) {
+            suggestSongsByWeather(weatherCondition);
+            step = 4;
+          } else {
+            addBubble(`Okay, have a great day, ${userName}!`);
+            step = -1;
+          }
+          break;
+
+        case 4:
+          addBubble(`🎉 Enjoy your music, ${userName}! Have a good day!`);
+          step = -1;
+          break;
+
+        default:
+          addBubble("Conversation ended. Refresh the page to start again.");
+      }
+    }
+
+    async function getWeather(city) {
+      const apiKey = '67c6327d367d37bcf736e52f2a869f16';
+      const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${apiKey}`;
+
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if (data.cod !== 200) {
+          addBubble("❗ City not found. Please check spelling.");
+          return false;
+        }
+
+        weatherCondition = data.weather[0].main;
+        const temp = data.main.temp;
+        addBubble(`🌤️ In ${city}, it's currently ${weatherCondition} and ${temp}°C.`);
+        return true;
+      } catch {
+        addBubble("⚠️ Error fetching weather. Try again.");
+        return false;
+      }
+    }
+
+    function giveWeatherTip(condition) {
+      let tip = "Have a great day!";
+      if (condition.includes("Rain")) tip = "☔ It's rainy! Take an umbrella.";
+      else if (condition.includes("Cloud")) tip = "☁️ It's cloudy! Might be a lazy day.";
+      else if (condition.includes("Clear")) tip = "😎 It's clear! Wear sunglasses.";
+      else if (condition.includes("Snow")) tip = "❄️ It's snowy! Dress warmly.";
+      addBubble(`${tip} Do you like this? ✅ or ❌`);
+    }
+
+    function suggestSongsByWeather(condition) {
+      let playlist = {
+        title: "🎶 Here's a playlist for your mood!",
+        url: "https://open.spotify.com/playlist/0cJFpwIlxFm3NsKboxbQ6a"
+      };
+
+      if (condition.includes("Rain")) {
+        playlist = {
+          title: "🌧️ It's rainy! Here's your Rainy Day Vibes playlist:",
+          url: "https://open.spotify.com/playlist/0OinvNdDafWgANIJQ9xgIf"
+        };
+      } else if (condition.includes("Cloud")) {
+        playlist = {
+          title: "☁️ It's cloudy! Enjoy this Chill Cloudy Day playlist:",
+          url: "https://open.spotify.com/playlist/2MVUwKF7B95UeJSv9KZx71"
+        };
+      } else if (condition.includes("Clear")) {
+        playlist = {
+          title: "☀️ It's sunny! Vibe with this Sunny Day playlist:",
+          url: "https://open.spotify.com/playlist/46BBCCUsCv4MDz5XY5IYjs"
+        };
+      } else if (condition.includes("Snow")) {
+        playlist = {
+          title: "❄️ It's snowy! Warm up with this Winter Chill playlist:",
+          url: "https://open.spotify.com/playlist/0aAVviq9OPeyO6Kr5C3rG5"
+        };
+      }
+
+      addBubble(playlist.title);
+
+      const iframe = document.createElement('iframe');
+      iframe.src = playlist.url.replace("open.spotify.com", "open.spotify.com/embed");
+      iframe.width = "100%";
+      iframe.style.maxWidth = "100%";
+      iframe.height = "152";
+      iframe.frameBorder = "0";
+      iframe.allow = "autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture";
+      iframe.style.borderRadius = "12px";
+
+      chatContainer.appendChild(iframe);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+
+      addBubble("🎶 Want another one? Just say ➕ or ❌ to end.");
+    }
+
+    window.onload = () => {
+      setTimeout(() => {
+        addBubble("👋 Hello! What's your name?");
+      }, 500);
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('bot-avatar-link').addEventListener('click', (e) => {
+        e.preventDefault();
+        Swal.fire({
+          title: 'Hello! 🤖',
+          text: "I'm your Weather Buddy. I help you with weather tips, music, and more!",
+          icon: 'info',
+          confirmButtonText: 'Let\'s go! 🌤️',
+          background: '#f0f8ff',
+          color: '#333',
+          confirmButtonColor: '#4d4da4',
+          customClass: {
+            popup: 'animated tada'
+          }
+        });
+      });
+    });
+  </script>
+</body>
+</html>
